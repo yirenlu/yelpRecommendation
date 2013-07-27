@@ -1,12 +1,22 @@
 import json
 import linecache
 from pprint import pprint
-
+import numpy
+import math
 
 
 ## loads the review we want to predict. 
 ## n is the number from the top of the list of reviews.
 ## returns the business id and the user id of the review.
+
+def get_review_entry(user_id, business_id, directory):
+	'''retrieves the review that user_id gave business_id'''
+	with open(directory) as file:
+		for line in file:
+			parsed = json.loads(line)
+			if parsed['user_id'] == user_id and parsed['business_id'] == business_id:
+				return parsed['stars']
+
 def load_review(directory, n):
 	line = linecache.getline(directory, n)
 	review = json.loads(line)
@@ -49,6 +59,35 @@ def find_avr_rating(business_id_list):
 			n_of_ratings.append(0)
 
 	return avr_ratings, n_of_ratings
+
+def cosine_distance(u, v):
+    """
+    Returns the cosine of the angle between vectors v and u. This is equal to
+    u.v / |u||v|.
+    """
+    #print u,v
+    return numpy.dot(u, v) / (math.sqrt(numpy.dot(u, u)) * math.sqrt(numpy.dot(v, v)))
+
+def computes_business_similarity(business_id_1, business_id_2):
+	'''computes the similarity between two given businesses according to cosine similarity'''
+
+	review_direc = "Data/yelp_training_set/yelp_training_set_review.json"
+	business_1_vector = []
+	business_2_vector = []
+
+	### calculated by observing users who have rated both items
+	reviews_of_business_1 = find_id_data(business_id_1, "business_id", review_direc)
+	reviews_of_business_2 = find_id_data(business_id_2, "business_id", review_direc)
+	co_raters = [review['user_id'] for review in reviews_of_business_1 for review2 in reviews_of_business_2 if review['user_id'] == review2['user_id']]
+	
+	for rater in co_raters:
+		business_1_vector.append(get_review_entry(rater, business_id_1, review_direc))
+		business_2_vector.append(get_review_entry(rater, business_id_2, review_direc))
+
+	# uses either cosine or correlation similarity metric
+	similarity = cosine_distance(business_1_vector, business_2_vector)
+	print 'The similarity of these two items is %s' % similarity
+
 ## MAIN ##
 
 if __name__ == '__main__':
@@ -56,20 +95,19 @@ if __name__ == '__main__':
 	## load the review we want to predict
 	test_direc = "Data/yelp_test_set/yelp_test_set_review.json"
 	user_id, biz_id = load_review(test_direc, 1)
-	print "IDs: ", user_id, biz_id
-	print
+	#print "IDs: ", user_id, biz_id
+	#print
 
 	## load the profile of the business
 	biz_direc = "Data/yelp_test_set/yelp_test_set_business.json"
 	biz = find_id_data(biz_id, "business_id", biz_direc)
-	print biz
-	print
+	#print biz
+	#print
 
 	## load he profile of the user
 	user_direc = "Data/yelp_test_set/yelp_test_set_user.json"
 	user = find_id_data(user_id, "user_id", user_direc)
-	print user
-	print
+	#print user
 
 	## find reviews of the restaurant and find average
 	# review_direc = "Data/yelp_training_set/yelp_training_set_review.json"
@@ -78,11 +116,17 @@ if __name__ == '__main__':
 	# 	rating, number = weighted_avr(reviews)
 	# 	print "Rating: ", rating, "Number: ", number
 
-	ratings, n_of_ratings = find_avr_rating([biz_id])
-	print ratings, n_of_ratings
+	#ratings, n_of_ratings = find_avr_rating([biz_id])
+	#print ratings, n_of_ratings
 
+	## load a training review
+	training_direc = "Data/yelp_training_set/yelp_training_set_review.json"
+	user1, biz1 = load_review(training_direc, 3)
+	user2, biz2 = load_review(training_direc, 8)
+	#print biz1, biz2
 
-
+	computes_business_similarity(biz1, biz2)
+		
 	# directory = "Data/yelp_training_set/yelp_training_set_business.json"
 	# data = load_data(directory)
 	# pprint(data)
