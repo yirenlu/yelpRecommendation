@@ -4,15 +4,28 @@ from pprint import pprint
 import numpy
 import math
 
+## Directories!
+
+biz_test_direc = "Data/yelp_test_set/yelp_test_set_business.json"
+biz_train_direc = "Data/yelp_training_set/yelp_training_set_business.json"
+
+user_test_direc = "Data/yelp_test_set/yelp_test_set_user.json"
+user_train_direc = "Data/yelp_training_set/yelp_training_set_user.json"
+
+rev_test_direc = "Data/yelp_test_set/yelp_test_set_review.json"
+rev_training_direc = "Data/yelp_training_set/yelp_training_set_review.json"
 
 ## loads the review we want to predict. 
 ## n is the number from the top of the list of reviews.
-## returns the business id and the user id of the review.
+## returns the user id and the business id of the review.
 
 def load_review(directory, n):
 	line = linecache.getline(directory, n)
 	review = json.loads(line)
-	return review["user_id"], review["business_id"]
+	if 'stars' in review:
+		return review["user_id"], review["business_id"], review["stars"]
+	else:
+		return review["user_id"], review["business_id"], None
 
 ## retrieves the review that user_id gave business_id
 def get_review_entry(user_id, business_id, directory):
@@ -90,38 +103,74 @@ def computes_business_similarity(business_id_1, business_id_2):
 	similarity = cosine_distance(business_1_vector, business_2_vector)
 	print 'The similarity of these two items is %s' % similarity
 
+## calculates the average
+def avr_error_user_mean():
+	for n in range(1, 5000):
+		user_id, biz_id, stars = load_review(rev_training_direc, n)
+
+		user = find_id_data(user_id, "user_id", user_train_direc)
+		user_avr_rating = user['average_stars']
+
+		biz = find_id_data(biz_id, "business_id", biz_train_direc)
+		biz_avr_rating = biz['stars']
+
+		# find whatever metric we are interested in.
+		
 ## MAIN ##
 
 if __name__ == '__main__':
 
+
+	for n in range(1, 1000):
 	## load the review we want to predict
-	test_direc = "Data/yelp_test_set/yelp_test_set_review.json"
-	user_id, biz_id = load_review(test_direc, 1)
-	#print "IDs: ", user_id, biz_id
-	#print
+		
+		user_id, biz_id, _ = load_review(rev_test_direc, n)
+		print "IDs: ", user_id, biz_id
+
+		biz = find_id_data(user_id, "user_id", user_test_direc)
+		if biz:
+			print "test"
+		biz = find_id_data(user_id, "user_id", user_train_direc)	
+		if biz:
+			print "train"
+			
+		print
 
 	## load the profile of the business
-	biz_direc = "Data/yelp_test_set/yelp_test_set_business.json"
-	biz = find_id_data(biz_id, "business_id", biz_direc)
-	#print biz
+	
+	
 	#print
 
-	## load he profile of the user
-	user_direc = "Data/yelp_test_set/yelp_test_set_user.json"
-	user = find_id_data(user_id, "user_id", user_direc)
+	## load the profile of the user
+	# user_direc = "Data/yelp_test_set/yelp_test_set_user.json"
+	# user = find_id_data(user_id, "user_id", user_direc)
 	#print user
 
 	## find reviews of the restaurant and find average
-	#ratings, n_of_ratings = find_avr_rating([biz_id])
-	#print ratings, n_of_ratings
+	# ratings, n_of_ratings = find_avr_rating([biz_id])
+	# print ratings, n_of_ratings
+
+	# training_direc = "Data/yelp_training_set/yelp_training_set_review.json"
+	# user_reviews = find_id_data(user_id, 'user_id', training_direc)
+	# print user_reviews
+	# businesses = [review["business_id"] for review in user_reviews]
+	# ratings_list, n_of_ratings_list = find_avr_rating(businesses)
+
+	# print ratings_list
+	# print n_of_ratings_list
+
+
+
+
+	## ----- Ren's stuff ------
 
 	## load a training review
-	training_direc = "Data/yelp_training_set/yelp_training_set_review.json"
-	user1, biz1 = load_review(training_direc, 3)
-	user2, biz2 = load_review(training_direc, 8)
-	#print biz1, biz2
+	# training_direc = "Data/yelp_training_set/yelp_training_set_review.json"
+	# user1, biz1 = load_review(training_direc, 3)
+	# user2, biz2 = load_review(training_direc, 8)
+	# #print biz1, biz2
 
-	computes_business_similarity(biz1, biz2)
+	# computes_business_similarity(biz1, biz2)
 		
 	# directory = "Data/yelp_training_set/yelp_training_set_business.json"
 	# data = load_data(directory)
