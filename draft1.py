@@ -9,18 +9,18 @@ import math
 ## n is the number from the top of the list of reviews.
 ## returns the business id and the user id of the review.
 
+def load_review(directory, n):
+	line = linecache.getline(directory, n)
+	review = json.loads(line)
+	return review["user_id"], review["business_id"]
+
+## retrieves the review that user_id gave business_id
 def get_review_entry(user_id, business_id, directory):
-	'''retrieves the review that user_id gave business_id'''
 	with open(directory) as file:
 		for line in file:
 			parsed = json.loads(line)
 			if parsed['user_id'] == user_id and parsed['business_id'] == business_id:
 				return parsed['stars']
-
-def load_review(directory, n):
-	line = linecache.getline(directory, n)
-	review = json.loads(line)
-	return review["user_id"], review["business_id"]  
 
 ## gathers a business / user profile given the id, directory, and field ("business_id" or "user_id").
 def find_id_data(id, field, directory):
@@ -34,7 +34,7 @@ def find_id_data(id, field, directory):
 
 	return data
 
-def weighted_avr(reviews):
+def avr(reviews):
 	n = len(reviews)
 	stars = 0
 	for review in reviews:
@@ -51,7 +51,7 @@ def find_avr_rating(business_id_list):
 	for business_id in business_id_list:
 		reviews = find_id_data(biz_id, "business_id", review_direc)
 		if reviews:
-			rating, number = weighted_avr(reviews)
+			rating, number = avr(reviews)
 			avr_ratings.append(rating)
 			n_of_ratings.append(number)
 		else:
@@ -81,8 +81,10 @@ def computes_business_similarity(business_id_1, business_id_2):
 	co_raters = [review['user_id'] for review in reviews_of_business_1 for review2 in reviews_of_business_2 if review['user_id'] == review2['user_id']]
 	
 	for rater in co_raters:
-		business_1_vector.append(get_review_entry(rater, business_id_1, review_direc))
-		business_2_vector.append(get_review_entry(rater, business_id_2, review_direc))
+		rating1 = [review['stars'] for review in reviews_of_business_1 if review['user_id'] == rater]
+		rating2 = [review['stars'] for review in reviews_of_business_2 if review['user_id'] == rater]
+		business_1_vector.append(rating1.pop(0))
+		business_2_vector.append(rating2.pop(0))
 
 	# uses either cosine or correlation similarity metric
 	similarity = cosine_distance(business_1_vector, business_2_vector)
@@ -110,12 +112,6 @@ if __name__ == '__main__':
 	#print user
 
 	## find reviews of the restaurant and find average
-	# review_direc = "Data/yelp_training_set/yelp_training_set_review.json"
-	# reviews = find_id_data(biz_id, "business_id", review_direc)
-	# if reviews:
-	# 	rating, number = weighted_avr(reviews)
-	# 	print "Rating: ", rating, "Number: ", number
-
 	#ratings, n_of_ratings = find_avr_rating([biz_id])
 	#print ratings, n_of_ratings
 
