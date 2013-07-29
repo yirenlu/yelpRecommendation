@@ -105,36 +105,43 @@ def computes_business_similarity(business_id_1, business_id_2):
 
 ## calculates the average
 def avr_error_user_mean():
-	for n in range(1, 5000):
+	trials = 1000
+	error = 0
+
+	for n in range(300, 300+trials):
 		user_id, biz_id, stars = load_review(rev_training_direc, n)
 
-		user = find_id_data(user_id, "user_id", user_train_direc)
-		user_avr_rating = user['average_stars']
+		# user = find_id_data(user_id, "user_id", user_train_direc).pop(0)
+		# user_avr_rating = user['average_stars']
 
-		biz = find_id_data(biz_id, "business_id", biz_train_direc)
+		biz = find_id_data(biz_id, "business_id", biz_train_direc).pop(0)
 		biz_avr_rating = biz['stars']
 
 		# find whatever metric we are interested in.
-		
+		# print abs(stars - biz_avr_rating)
+		error += abs(stars - biz_avr_rating)
+
+	print "ERROR: ", float(error)/float(trials)
+
 ## MAIN ##
 
 if __name__ == '__main__':
 
-
-	for n in range(1, 1000):
-	## load the review we want to predict
+	avr_error_user_mean()
+	# for n in range(1, 1000):
+	# ## load the review we want to predict
 		
-		user_id, biz_id, _ = load_review(rev_test_direc, n)
-		print "IDs: ", user_id, biz_id
+	# 	user_id, biz_id, _ = load_review(rev_test_direc, n)
+	# 	print "IDs: ", user_id, biz_id
 
-		biz = find_id_data(user_id, "user_id", user_test_direc)
-		if biz:
-			print "test"
-		biz = find_id_data(user_id, "user_id", user_train_direc)	
-		if biz:
-			print "train"
+	# 	biz = find_id_data(user_id, "user_id", user_test_direc)
+	# 	if biz:
+	# 		print "test"
+	# 	biz = find_id_data(user_id, "user_id", user_train_direc)	
+	# 	if biz:
+	# 		print "train"
 			
-		print
+	# 	print
 
 	## load the profile of the business
 	
