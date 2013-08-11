@@ -19,13 +19,16 @@ rev_training_direc = "Data/yelp_training_set/yelp_training_set_review.json"
 ## n is the number from the top of the list of reviews.
 ## returns the user id and the business id of the review.
 
-def load_review(directory, n):
+def get_review(directory, n):
 	line = linecache.getline(directory, n)
 	review = json.loads(line)
-	if 'stars' in review:
-		return review["user_id"], review["business_id"], review["stars"]
+	return return_id(review)
+
+def return_id(line):
+	if 'stars' in line:
+		return line["user_id"], line["business_id"], line["stars"]
 	else:
-		return review["user_id"], review["business_id"], None
+		return line["user_id"], line["business_id"], None
 
 ## retrieves the review that user_id gave business_id
 def get_review_entry(user_id, business_id, directory):
@@ -105,23 +108,39 @@ def computes_business_similarity(business_id_1, business_id_2):
 
 ## calculates the average
 def avr_error_user_mean():
-	trials = 1000
+	biz_weight = .5
+	user_weight = 1 - biz_weight
+
 	error = 0
+	trials = 0
+	total_trials = 1000
 
-	for n in range(300, 300+trials):
-		user_id, biz_id, stars = load_review(rev_training_direc, n)
+	with open(rev_training_direc) as file:
+		for line in file:
+			parsed = json.loads(line)
+			user_id, biz_id, stars = return_id(parsed)
 
-		# user = find_id_data(user_id, "user_id", user_train_direc).pop(0)
-		# user_avr_rating = user['average_stars']
+			biz = find_id_data(biz_id, "business_id", biz_train_direc).pop(0)
+			biz_avr_rating = biz['stars']
 
-		biz = find_id_data(biz_id, "business_id", biz_train_direc).pop(0)
-		biz_avr_rating = biz['stars']
+			user_list = find_id_data(user_id, "user_id", user_train_direc)
+			if user_list:
+				user = user_list.pop(0)
+				user_avr_rating = user['average_stars']
+				rating = biz_weight*biz_avr_rating + user_weight*user_avr_rating
+			else:
+				rating = biz_avr_rating
 
-		# find whatever metric we are interested in.
-		# print abs(stars - biz_avr_rating)
-		error += abs(stars - biz_avr_rating)
+			error += abs(stars - rating)
+			trials += 1
 
-	print "ERROR: ", float(error)/float(trials)
+			if trials == total_trials:
+				print "ERROR: ", float(error)/float(trials)
+				return
+
+		print "ERROR: ", float(error)/float(trials)
+		return
+	
 
 ## MAIN ##
 
